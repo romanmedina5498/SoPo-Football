@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Red Riots 2026 — Analytics</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F2; --surface:#FFFFFF; --ink:#14213D; --muted:#5B6472; --rule:#D8DDD6;
+  --riot:#B3132B; --riot-soft:#F6DADF; --turf:#2E7D4F; --turf-soft:#DCEFE3; --gold:#B8862A; --opp:#7A8597;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --body:"Barlow",Arial,Helvetica,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0F1620; --surface:#17212E; --ink:#E7EBEF; --muted:#9AA5B4; --rule:#2A3646;
+  --riot:#E2445C; --riot-soft:#3A1C24; --turf:#5CC48A; --turf-soft:#173325; --gold:#E0B25A; --opp:#8E9AAD;}}
+:root[data-theme="dark"]{
+  --paper:#0F1620; --surface:#17212E; --ink:#E7EBEF; --muted:#9AA5B4; --rule:#2A3646;
+  --riot:#E2445C; --riot-soft:#3A1C24; --turf:#5CC48A; --turf-soft:#173325; --gold:#E0B25A; --opp:#8E9AAD;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 56px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:4px}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0}
+.lede{color:var(--muted);max-width:66ch;margin-top:6px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:3px solid var(--riot);padding-bottom:14px}
+.record{font-family:var(--display);font-size:3.2rem;font-weight:800;line-height:1;color:var(--riot)}
+.record small{display:block;font-size:.95rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+/* game strip */
+.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin:18px 0 8px;border:1px solid var(--rule);background:var(--surface);border-radius:6px;overflow:hidden}
+.strip button{all:unset;cursor:pointer;padding:10px 12px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;position:relative}
+.strip button:last-child{border-right:0}
+.strip button:focus-visible{outline:3px solid var(--riot);outline-offset:-3px}
+.strip .opp{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .score{font-family:var(--display);font-size:1.6rem;font-weight:700}
+.strip .wl{font-family:var(--display);font-weight:700;font-size:.95rem}
+.strip .W{color:var(--turf)} .strip .L{color:var(--riot)}
+.strip button[aria-pressed="true"]{background:var(--riot-soft)}
+.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--riot)}
+.scope{font-size:.9rem;color:var(--muted);margin-bottom:22px}
+section{margin-top:36px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:10px 0 12px;font-size:.92rem}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:999px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 12px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible{outline:2px solid var(--riot);outline-offset:-2px}
+label.inline{display:inline-flex;gap:8px;align-items:center;color:var(--muted)}
+input[type=range]{accent-color:var(--riot)}
+.chartbox{position:relative;height:420px}
+.chartbox.sm{height:280px}
+/* field band behind scatter */
+.field{background:
+  repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),color-mix(in srgb,var(--turf) 10%,transparent) calc(10% - 1px) 10%);
+  border-radius:4px}
+.obs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.obs li{border-left:4px solid var(--rule);padding:6px 0 6px 12px}
+.obs li.eff{border-color:var(--turf)} .obs li.heavy{border-color:var(--riot)} .obs li.info{border-color:var(--gold)}
+.obs b{font-family:var(--display);font-size:1.1rem;font-weight:700}
+.obs span{display:block;color:var(--muted);font-size:.92rem}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px}
+.kpi .v{font-family:var(--display);font-size:2rem;font-weight:700;line-height:1}
+.kpi .v em{font-style:normal;font-size:1rem;color:var(--muted);font-weight:600;margin-left:6px}
+.kpi .l{font-size:.85rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{position:sticky;top:0;background:var(--surface);font-family:var(--display);font-weight:700;font-size:1rem;cursor:pointer;user-select:none}
+thead th:focus-visible{outline:2px solid var(--riot);outline-offset:-2px}
+thead th[aria-sort="descending"]::after{content:" ▾"} thead th[aria-sort="ascending"]::after{content:" ▴"}
+tbody tr:hover{background:color-mix(in srgb,var(--riot) 6%,transparent)}
+td.num-hi{color:var(--turf);font-weight:600} td.num-lo{color:var(--riot)}
+.tag{display:inline-block;font-size:.8rem;padding:1px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--rule);color:var(--muted)}
+.tag.eff{background:var(--turf-soft);color:var(--turf);border-color:transparent}
+.tag.heavy{background:var(--riot-soft);color:var(--riot);border-color:transparent}
+.foot{margin-top:40px;color:var(--muted);font-size:.88rem;max-width:80ch;display:grid;gap:6px}
+.foot b{color:var(--ink)}
+.tabs{margin:12px 0}
+select{font:inherit;padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+.kpi .s{font-size:.82rem;color:var(--muted);margin-top:2px}
+
+@media (max-width:860px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.strip{grid-template-columns:repeat(3,minmax(0,1fr))}.strip button:nth-child(3){border-right:0}.strip button:nth-child(-n+3){border-bottom:1px solid var(--rule)}.chartbox{height:340px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:28px}
+.card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--rule);border-left:6px solid var(--riot);border-radius:6px;padding:20px}
+.card:hover{background:var(--riot-soft)} .card:focus-visible{outline:3px solid var(--riot);outline-offset:2px}
+.card h2{font-size:1.9rem} .card p{color:var(--muted);margin-top:6px}
+@media (max-width:700px){.cards{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<header class="top"><div><h1>Red Riots 2026 analytics</h1><p class="lede">Season efficiency dashboards built from the game charts. Each page is interactive: pick a game to filter, tap a dot or column for details.</p></div></header>
+<div class="cards">
+<a class="card" href="offense.html"><h2>Offense board</h2><p>Success rates, explosive plays, usage vs. efficiency, and who could see more of the ball.</p></a>
+<a class="card" href="defense.html"><h2>Defense board</h2><p>Opponent success allowed, stop rates by position group, and who could see more snaps.</p></a>
+</div>
+<div class="foot"><p>Updated after the Sanford game (5 games charted).</p></div>
+</div></body></html>

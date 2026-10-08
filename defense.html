@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Red Riots defense board — 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#F3F5F2; --surface:#FFFFFF; --ink:#14213D; --muted:#5B6472; --rule:#D8DDD6;
+  --riot:#B3132B; --riot-soft:#F6DADF; --turf:#2E7D4F; --turf-soft:#DCEFE3; --gold:#B8862A; --opp:#7A8597;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --body:"Barlow",Arial,Helvetica,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0F1620; --surface:#17212E; --ink:#E7EBEF; --muted:#9AA5B4; --rule:#2A3646;
+  --riot:#E2445C; --riot-soft:#3A1C24; --turf:#5CC48A; --turf-soft:#173325; --gold:#E0B25A; --opp:#8E9AAD;}}
+:root[data-theme="dark"]{
+  --paper:#0F1620; --surface:#17212E; --ink:#E7EBEF; --muted:#9AA5B4; --rule:#2A3646;
+  --riot:#E2445C; --riot-soft:#3A1C24; --turf:#5CC48A; --turf-soft:#173325; --gold:#E0B25A; --opp:#8E9AAD;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 56px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.7rem;font-weight:700;margin-bottom:4px}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0}
+.lede{color:var(--muted);max-width:66ch;margin-top:6px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:3px solid var(--riot);padding-bottom:14px}
+.record{font-family:var(--display);font-size:3.2rem;font-weight:800;line-height:1;color:var(--riot)}
+.record small{display:block;font-size:.95rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+/* game strip */
+.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin:18px 0 8px;border:1px solid var(--rule);background:var(--surface);border-radius:6px;overflow:hidden}
+.strip button{all:unset;cursor:pointer;padding:10px 12px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;position:relative}
+.strip button:last-child{border-right:0}
+.strip button:focus-visible{outline:3px solid var(--riot);outline-offset:-3px}
+.strip .opp{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .score{font-family:var(--display);font-size:1.6rem;font-weight:700}
+.strip .wl{font-family:var(--display);font-weight:700;font-size:.95rem}
+.strip .W{color:var(--turf)} .strip .L{color:var(--riot)}
+.strip button[aria-pressed="true"]{background:var(--riot-soft)}
+.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--riot)}
+.scope{font-size:.9rem;color:var(--muted);margin-bottom:22px}
+section{margin-top:36px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:10px 0 12px;font-size:.92rem}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:999px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 12px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible{outline:2px solid var(--riot);outline-offset:-2px}
+label.inline{display:inline-flex;gap:8px;align-items:center;color:var(--muted)}
+input[type=range]{accent-color:var(--riot)}
+.chartbox{position:relative;height:420px}
+.chartbox.sm{height:280px}
+/* field band behind scatter */
+.field{background:
+  repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),color-mix(in srgb,var(--turf) 10%,transparent) calc(10% - 1px) 10%);
+  border-radius:4px}
+.obs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.obs li{border-left:4px solid var(--rule);padding:6px 0 6px 12px}
+.obs li.eff{border-color:var(--turf)} .obs li.heavy{border-color:var(--riot)} .obs li.info{border-color:var(--gold)}
+.obs b{font-family:var(--display);font-size:1.1rem;font-weight:700}
+.obs span{display:block;color:var(--muted);font-size:.92rem}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px}
+.kpi .v{font-family:var(--display);font-size:2rem;font-weight:700;line-height:1}
+.kpi .v em{font-style:normal;font-size:1rem;color:var(--muted);font-weight:600;margin-left:6px}
+.kpi .l{font-size:.85rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{position:sticky;top:0;background:var(--surface);font-family:var(--display);font-weight:700;font-size:1rem;cursor:pointer;user-select:none}
+thead th:focus-visible{outline:2px solid var(--riot);outline-offset:-2px}
+thead th[aria-sort="descending"]::after{content:" ▾"} thead th[aria-sort="ascending"]::after{content:" ▴"}
+tbody tr:hover{background:color-mix(in srgb,var(--riot) 6%,transparent)}
+td.num-hi{color:var(--turf);font-weight:600} td.num-lo{color:var(--riot)}
+.tag{display:inline-block;font-size:.8rem;padding:1px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--rule);color:var(--muted)}
+.tag.eff{background:var(--turf-soft);color:var(--turf);border-color:transparent}
+.tag.heavy{background:var(--riot-soft);color:var(--riot);border-color:transparent}
+.foot{margin-top:40px;color:var(--muted);font-size:.88rem;max-width:80ch;display:grid;gap:6px}
+.foot b{color:var(--ink)}
+.tabs{margin:12px 0}
+select{font:inherit;padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+.kpi .s{font-size:.82rem;color:var(--muted);margin-top:2px}
+
+@media (max-width:860px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.strip{grid-template-columns:repeat(3,minmax(0,1fr))}.strip button:nth-child(3){border-right:0}.strip button:nth-child(-n+3){border-bottom:1px solid var(--rule)}.chartbox{height:340px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.legend-dots{display:flex;gap:14px;font-size:.88rem;color:var(--muted)}
+</style></head><body>
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Red Riots defense board</h1>
+    <p class="lede">How often opponents succeed against us, where it happens, and which defenders end plays short of the sticks. Pick a game to filter everything except the deep dive at the bottom.</p>
+  </div>
+  <div class="record" id="record"></div>
+</header>
+<nav class="strip" id="strip" aria-label="Filter by game"></nav>
+<p class="scope" id="scope"></p>
+
+<section aria-labelledby="h-team">
+  <h2 id="h-team">Team defense</h2>
+  <div class="kpis" id="kpis"></div>
+  <div class="kpis" id="kpis2"></div>
+  <div class="grid2">
+    <div class="panel"><h3>Opponent success rate by game</h3><p class="lede" style="font-size:.88rem">Run and pass plays shown separately. Lower is better for us.</p><div class="chartbox sm"><canvas id="byGame" aria-label="Opponent success by game"></canvas></div></div>
+    <div class="panel"><h3>Where opponents succeed</h3>
+      <div class="seg" role="group" aria-label="Split" id="splitSeg" style="margin:6px 0 4px">
+        <button data-s="down" aria-pressed="true">By down</button><button data-s="zone" aria-pressed="false">By field position</button><button data-s="qtr" aria-pressed="false">By quarter</button>
+      </div>
+      <div class="chartbox sm"><canvas id="split" aria-label="Opponent success split"></canvas></div></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-play">
+  <h2 id="h-play">Who ends plays</h2>
+  <p class="lede">Each dot is a defender. Further right means involved in more tackles; higher means more of those tackles came on plays that fell short for the offense (a <b>stop</b>). Linemen tackle near the line and safeties tackle after gains, so compare players with their own position group.</p>
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Measure" id="metricSeg">
+      <button data-m="stop" aria-pressed="true">Stop rate</button>
+      <button data-m="depth" aria-pressed="false">Tackle depth</button>
+      <button data-m="havoc" aria-pressed="false">Havoc per involvement</button>
+    </div>
+    <div class="seg" role="group" aria-label="Position group" id="grpSeg">
+      <button data-g="all" aria-pressed="true">All</button><button data-g="Front" aria-pressed="false">Line</button><button data-g="LB" aria-pressed="false">Linebackers</button><button data-g="DB" aria-pressed="false">Secondary</button>
+    </div>
+    <label class="inline">Minimum tackles <input type="range" id="minInv" min="1" max="15" value="4"><output id="minOut">4</output></label>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="chartbox field"><canvas id="scatter" aria-label="Involvement against stop rate"></canvas></div></div>
+    <div><h3 style="margin-bottom:10px">What stands out</h3><ul class="obs" id="obs"></ul></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-players">
+  <h2 id="h-players">Defender table</h2>
+  <div class="seg tabs" role="group" id="tgSeg">
+    <button data-g="all" aria-pressed="true">All</button><button data-g="Front" aria-pressed="false">Line</button><button data-g="LB" aria-pressed="false">Linebackers</button><button data-g="DB" aria-pressed="false">Secondary</button>
+  </div>
+  <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+</section>
+
+<section aria-labelledby="h-deep">
+  <h2 id="h-deep">Who could see more snaps</h2>
+  <p class="lede">Full season. Each stop rate is pulled toward his position group's average as if he'd also had 10 average tackles, so a perfect 3-for-3 doesn't outrank a proven 17-for-18. The line shows an 80% range for his true rate.</p>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel"><h3>Adjusted stop rate vs. position group</h3><div class="chartbox" style="height:460px"><canvas id="ci" aria-label="Adjusted stop rate with ranges"></canvas></div></div>
+    <div><h3 style="margin-bottom:10px">What the numbers support</h3><ul class="obs" id="deepObs"></ul></div>
+  </div>
+  <div class="panel" style="margin-top:22px">
+    <h3>Spotlight</h3>
+    <div class="toolbar"><label class="inline">Defender <select id="spotSel"></select></label></div>
+    <div class="grid2">
+      <div><div class="kpis" id="spotKpis" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+        <div class="tablewrap" style="max-height:360px;overflow-y:auto"><table id="spotTbl"><thead></thead><tbody></tbody></table></div></div>
+      <div><p class="lede" style="font-size:.88rem;margin-bottom:6px">Tackles by game: stops vs. tackles after a successful play</p><div class="chartbox sm"><canvas id="spotBar" aria-label="Tackles by game"></canvas></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  <p><b>Success</b> (for the opponent) means gaining 50% of the distance on 1st down, 70% on 2nd, and all of it on 3rd or 4th; TDs count, turnovers never do. <b>Explosive</b> = runs of 10+ and completions of 15+. <b>Stuff</b> = a run for zero or negative yards.</p>
+  <p><b>Involvement</b> = a scrimmage snap where the player is charted as the tackler or assist. <b>Stop rate</b> = share of those snaps where the offense fell short of success. <b>Tackle depth</b> = average yards the offense gained on those snaps (lower is better). <b>Havoc</b> = TFL, sack, INT, PBU or forced fumble.</p>
+  <p><b>Adjusted stop rate</b> = (stops + 10 × group rate) ÷ (involvements + 10). <b>80% range</b> is a Wilson interval. Kickoff and punt coverage are left out. Position groups come from the roster: DL/DE = line, LB = linebackers, DB = secondary.</p>
+  <p>The charts record who made the tackle, not who was on the field or who missed one, so this measures what happens when a player is involved rather than how often he's involved per snap. Snap counts would sharpen the "who could play more" read. Treat any flag as something to check on film.</p>
+</div>
+</div>
+
+<script>const D={"plays":[[1,1,1,10.0,91.0,"Run","Run",4.0,0,0,44,null,null,null,null,null],[1,1,2,6.0,87.0,"Run","Run",13.0,0,0,5,null,null,null,null,null],[1,1,1,10.0,74.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[1,1,2,5.0,67.0,"Pass","Comp",10.0,0,0,null,null,null,null,null,null],[1,1,1,10.0,57.0,"Run","Run",0,0,0,30,null,null,null,null,null],[1,1,2,10.0,43.0,"Run","Run",32.0,0,0,6,null,null,null,null,null],[1,1,1,10.0,25.0,"Pass","Comp",22.0,0,0,23,null,null,null,null,null],[1,1,1,10.0,3.0,"Run","Run",3.0,1,0,null,null,null,null,null,null],[1,1,1,10.0,65.0,"Pass","Comp",5.0,0,0,21,null,null,null,null,null],[1,1,2,5.0,60.0,"Run","Run",4.0,0,0,30,null,null,null,null,null],[1,1,3,6.0,61.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[1,1,4,6.0,61.0,"Run","Run",1.0,0,0,30,null,null,null,null,null],[1,2,1,10.0,72.0,"Run","Run",2.0,0,0,30,null,null,null,null,null],[1,2,2,8.0,70.0,"Run","Run",6.0,0,0,35,null,null,null,null,null],[1,2,3,2.0,64.0,"Run","Run",4.0,0,0,8,null,null,null,null,null],[1,2,1,10.0,60.0,"Run","Run",3.0,0,0,72,null,null,null,null,null],[1,2,2,7.0,57.0,"Run","Run",0,0,0,87,null,null,null,null,null],[1,2,3,7.0,57.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[1,3,1,10.0,80.0,"Run","Run",-1.0,0,0,44,null,null,null,null,null],[1,3,2,11.0,81.0,"Run","Run",3.0,0,0,34,null,null,null,null,null],[1,3,3,8.0,78.0,"Pass","Comp",14.0,0,0,null,null,null,null,null,null],[1,3,1,10.0,64.0,"Run","Run",11.0,0,0,87,null,null,null,null,null],[1,3,1,20.0,63.0,"Pass","Comp",21.0,0,0,5,null,null,null,null,null],[1,3,1,10.0,42.0,"Run","Run",19.0,0,0,8,null,null,null,null,null],[1,3,1,10.0,23.0,"Run","Run",11.0,0,0,8,null,null,null,null,null],[1,3,1,10.0,12.0,"Run","Run",1.0,0,0,11,null,null,null,null,null],[1,3,2,9.0,11.0,"Run","Run",10.0,0,0,5,null,null,null,null,null],[1,3,1,1.0,1.0,"Run","Run",1.0,1,0,null,null,null,null,null,null],[1,3,1,10.0,50.0,"Run","Run",4.0,0,0,6,null,null,null,null,null],[1,3,2,6.0,46.0,"Run","Run",6.0,0,0,6,null,null,null,null,null],[1,3,3,0.5,40.0,"Run","Run",4.0,0,0,23,null,null,null,null,null],[1,3,1,10.0,36.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[1,3,2,10.0,36.0,"Run","Run",2.0,0,0,44,null,null,null,null,null],[1,3,3,8.0,34.0,"Run","Run",5.0,0,0,25,null,null,null,null,null],[1,4,4,3.0,29.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[1,4,1,10.0,93.0,"Run","Run",7.0,0,0,35,null,null,null,null,null],[1,4,2,3.0,86.0,"Run","Run",6.0,0,0,44,null,null,null,null,null],[1,4,1,10.0,80.0,"Run","Run",6.0,0,0,6,null,null,null,null,null],[1,4,2,14.0,84.0,"Run","Run",24.0,0,0,34,null,null,null,null,null],[2,1,1,10.0,72.0,"Run","Run",6.0,0,0,17,null,null,null,null,null],[2,1,2,4.0,66.0,"Run","Run",9.0,0,0,5,10,null,null,null,null],[2,1,1,10.0,57.0,"Run","Run",11.0,0,0,8,5,null,null,null,null],[2,1,1,10.0,46.0,"Run","Run",5.0,0,0,23,8,null,null,null,null],[2,1,2,5.0,41.0,"Run","Run",15.0,0,0,8,5,null,null,null,null],[2,1,1,10.0,26.0,"Run","Run",4.0,0,0,72,23,null,null,null,null],[2,1,2,6.0,22.0,"Run","Run",-2.0,0,0,null,null,null,null,null,null],[2,1,3,8.0,24.0,"Run","Run",15.0,0,0,34,null,null,null,null,null],[2,1,1,9.0,9.0,"Run","Run",1.0,0,0,5,null,null,null,null,null],[2,1,1,8.0,8.0,"Run","Run",8.0,1,0,null,null,null,null,null,null],[2,2,1,21.0,74.0,"Run","Run",18.0,0,0,35,34,null,null,null,null],[2,2,2,3.0,56.0,"Run","Run",1.0,0,0,5,8,null,null,null,null],[2,2,3,2.0,54.0,"Run","Run",6.0,0,0,5,null,null,null,null,null],[2,2,1,10.0,43.0,"Run","Run",3.0,0,0,72,null,null,null,null,null],[2,2,2,7.0,40.0,"Run","Run",1.0,0,0,44,23,null,null,null,null],[2,2,3,6.0,39.0,"Run","Run",0,0,1,null,null,null,null,34,null],[2,2,1,10.0,80.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[2,2,2,10.0,80.0,"Run","Run",4.0,0,0,23,null,null,null,null,null],[2,2,3,6.0,76.0,"Pass","Comp",8.0,0,0,8,23,null,null,null,null],[2,2,1,10.0,68.0,"Pass","Comp",27.0,0,0,10,null,null,null,null,null],[2,2,1,10.0,41.0,"Run","Run",12.0,0,0,5,25,null,null,null,null],[2,2,1,10.0,29.0,"Run","Run",9.0,0,0,33,null,null,null,null,null],[2,2,1,10.0,20.0,"Run","Run",20.0,1,0,null,null,null,null,null,null],[2,2,1,16.0,77.0,"Pass","Comp",13.0,0,0,null,null,null,null,null,null],[2,2,2,3.0,64.0,"Pass","Comp",9.0,0,0,5,null,null,null,null,null],[2,2,1,10.0,55.0,"Run","Run",6.0,0,0,25,5,null,null,null,null],[2,2,2,4.0,50.0,"Run","Run",11.0,0,0,8,5,null,null,null,null],[2,2,1,10.0,39.0,"Run","Run",9.0,0,0,null,null,null,null,null,null],[2,2,2,6.0,34.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[2,2,3,6.0,34.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[2,2,4,5.0,35.0,"Run","Run",2.0,0,0,72,null,null,null,null,null],[2,3,1,10.0,71.0,"Run","Run",3.0,0,0,23,74,null,null,null,null],[2,3,2,7.0,68.0,"Run","Run",12.0,0,0,10,null,null,null,null,null],[2,3,1,10.0,56.0,"Run","Run",3.0,0,0,72,null,null,null,null,null],[2,3,2,7.0,53.0,"Run","Run",8.0,0,0,72,null,null,null,null,null],[2,3,1,10.0,45.0,"Run","Run",2.0,0,0,23,null,null,null,null,null],[2,3,2,8.0,43.0,"Run","Run",12.0,0,0,33,null,null,null,null,null],[2,3,1,10.0,31.0,"Run","Run",4.0,0,0,5,23,null,null,null,null],[2,3,2,6.0,27.0,"Run","Run",2.0,0,0,23,72,null,null,null,null],[2,3,3,10.0,31.0,"Pass","Comp",8.0,0,0,10,null,null,null,null,null],[2,3,4,2.0,23.0,"Run","Run",8.0,0,0,55,33,null,null,null,null],[2,3,1,10.0,15.0,"Run","Run",15.0,1,0,null,null,null,null,null,null],[2,3,1,10.0,56.0,"Run","Run",5.0,0,0,34,null,null,null,null,null],[2,3,2,5.0,51.0,"Run","Run",51.0,1,0,null,null,null,null,null,null],[2,4,1,10.0,77.0,"Run","Run",2.0,0,0,23,null,null,null,null,null],[2,4,2,8.0,75.0,"Run","Run",14.0,0,0,5,null,null,null,null,null],[2,4,1,10.0,61.0,"Run","Run",4.0,0,0,23,null,null,null,null,null],[2,4,2,6.0,57.0,"Run","Run",4.0,0,0,23,72,null,null,null,null],[2,4,3,2.0,53.0,"Run","Run",11.0,0,0,5,null,null,null,null,null],[2,4,1,10.0,42.0,"Run","Run",5.0,0,0,23,55,null,null,null,null],[2,4,2,5.0,37.0,"Run","Run",13.0,0,0,34,null,null,null,null,null],[2,4,1,10.0,24.0,"Run","Run",3.0,0,0,23,72,null,null,null,null],[2,4,2,7.0,21.0,"Run","Run",10.0,0,0,5,34,null,null,null,null],[2,4,1,10.0,11.0,"Run","Run",4.0,0,0,74,null,null,null,null,null],[2,4,2,6.0,7.0,"Run","Run",7.0,1,0,null,null,null,null,null,null],[2,4,1,10.0,63.0,"Run","Run",-3.0,0,0,null,null,null,null,null,null],[2,4,2,13.0,66.0,"Run","Run",6.0,0,0,23,54,null,null,null,null],[2,4,3,8.0,61.0,"Run","Run",11.0,0,0,null,null,null,null,null,null],[3,1,1,10.0,68.0,"Run","Run",5.0,0,0,23,34,null,null,null,null],[3,1,2,5.0,63.0,"Run","Run",18.0,0,0,17,null,null,null,null,null],[3,1,1,10.0,45.0,"Run","Run",4.0,0,0,34,null,null,null,null,null],[3,1,2,5.0,40.0,"Run","Run",10.0,0,0,21,5,null,null,null,null],[3,1,1,10.0,30.0,"Run","Run",0,0,0,44,21,null,null,null,null],[3,1,2,10.0,30.0,"Run","Run",2.0,0,0,26,23,null,null,null,null],[3,1,3,8.0,28.0,"Run","Run",4.0,0,0,34,5,null,null,null,null],[3,1,1,10.0,22.0,"Run","Run",3.0,0,0,72,44,null,null,null,null],[3,1,2,7.0,19.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[3,1,3,7.0,19.0,"Run","Run",0,0,0,72,null,null,null,null,null],[3,1,4,7.0,19.0,"Pass","Comp",12.0,0,0,23,null,null,null,null,null],[3,1,1,7.0,7.0,"Run","Run",1.0,0,0,72,35,null,null,null,null],[3,1,2,6.0,6.0,"Run","Run",4.0,0,0,44,null,null,null,null,null],[3,1,3,2.0,2.0,"Run","Run",2.0,1,0,null,null,null,null,null,null],[3,2,1,10.0,46.0,"Run","Run",3.0,0,0,72,23,null,null,null,null],[3,2,2,7.0,43.0,"Run","Run",1.0,0,0,35,34,null,null,null,null],[3,2,3,6.0,42.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[3,2,1,10.0,86.0,"Run","Run",5.0,0,0,23,21,null,null,null,null],[3,2,2,5.0,81.0,"Run","Run",16.0,0,0,17,null,null,null,null,null],[3,2,1,10.0,65.0,"Run","Run",12.0,0,0,34,null,null,null,null,null],[3,2,1,10.0,53.0,"Run","Run",3.0,0,0,35,null,null,null,null,null],[3,3,1,10.0,63.0,"Run","Run",9.0,0,0,5,6,null,null,null,null],[3,3,2,1.0,54.0,"Run","Run",10.0,0,0,5,6,null,null,null,null],[3,3,1,10.0,44.0,"Run","Run",1.0,0,0,72,null,null,null,null,null],[3,3,2,9.0,43.0,"Run","Run",3.0,0,0,23,null,null,null,null,null],[3,3,3,6.0,40.0,"Run","Run",2.0,0,0,26,null,null,null,null,null],[3,3,4,3.0,37.0,"Run","Run",2.0,0,0,34,44,null,null,null,null],[3,3,1,10.0,99.0,"Run","Run",0,0,0,72,null,null,null,null,null],[3,4,2,10.0,99.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[3,4,3,10.0,99.0,"Pass","Comp",14.0,0,0,null,null,null,null,null,null],[3,4,1,10.0,85.0,"Run","Run",-3.0,0,0,35,null,null,null,null,null],[3,4,2,13.0,88.0,"Run","Run",4.0,0,0,23,null,null,null,null,null],[3,4,3,14.0,89.0,"Run","Run",9.0,0,0,34,null,null,null,null,null],[3,4,1,10.0,71.0,"Pass","Comp",7.0,0,0,null,null,null,null,null,null],[3,4,2,3.0,64.0,"Pass","Comp",32.0,0,0,6,null,null,null,null,null],[3,4,1,10.0,32.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[3,4,2,10.0,32.0,"Pass","Comp",12.0,0,0,17,null,null,null,null,null],[3,4,1,10.0,20.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[3,4,2,10.0,20.0,"Pass","Comp",12.0,0,0,21,6,null,null,null,null],[3,4,1,5.0,5.0,"Run","Run",3.0,0,0,23,null,null,null,null,null],[3,4,2,2.0,2.0,"Run","Run",0,0,0,33,6,null,null,null,null],[3,4,3,7.0,7.0,"Run","Run",0,0,0,21,23,null,null,null,null],[4,1,1,10.0,76.0,"Run","Run",4.0,0,0,5,34,null,null,null,null],[4,1,2,6.0,72.0,"Pass","Comp",4.0,0,0,6,null,null,null,null,null],[4,1,3,4.0,70.0,"Run","Run",2.0,0,0,34,null,null,null,null,null],[4,1,1,10.0,66.0,"Run","Run",66.0,1,0,null,null,null,null,null,null],[4,1,1,10.0,64.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,1,2,10.0,64.0,"Run","Run",7.0,0,0,30,null,null,null,null,null],[4,1,3,3.0,57.0,"Run","Run",5.0,0,0,23,null,null,null,null,null],[4,1,1,10.0,52.0,"Run","Run",2.0,0,0,87,null,null,null,null,null],[4,1,2,8.0,50.0,"Run","Run",50.0,1,0,null,null,null,null,null,null],[4,1,1,10.0,87.0,"Run","Run",8.0,0,0,30,null,null,null,null,null],[4,1,2,2.0,79.0,"Run","Run",3.0,0,0,30,44,null,null,null,null],[4,1,1,10.0,76.0,"Run","Run",-1.0,0,0,5,null,null,null,null,null],[4,1,2,11.0,77.0,"Run","Run",0,0,0,72,null,null,null,null,null],[4,1,3,11.0,77.0,"Pass","Comp",17.0,0,0,8,null,null,null,null,null],[4,1,1,10.0,60.0,"Run","Run",-1.0,0,0,55,null,null,null,null,null],[4,1,1,10.0,46.0,"Run","Run",-3.0,0,0,30,null,null,null,null,null],[4,1,2,13.0,49.0,"Pass","Comp",7.0,0,0,30,null,null,null,null,null],[4,1,3,6.0,42.0,"Pass","INT",0,0,1,null,null,5,null,null,null],[4,2,1,10.0,51.0,"Run","Run",0,0,0,23,null,null,null,null,null],[4,2,2,10.0,51.0,"Pass","Comp",10.0,0,0,11,null,null,null,null,null],[4,2,1,10.0,41.0,"Run","Run",1.0,0,0,55,null,null,null,null,null],[4,2,2,9.0,40.0,"Pass","Comp",10.0,0,0,21,null,null,null,null,null],[4,2,1,10.0,30.0,"Pass","Comp",20.0,0,0,6,null,null,null,null,null],[4,2,1,10.0,10.0,"Run","Run",8.0,0,0,11,null,null,null,null,null],[4,2,2,2.0,2.0,"Run","Run",2.0,1,0,null,null,null,null,null,null],[4,2,2,14.0,68.0,"Sack","Sack",-5.0,0,0,26,87,null,null,null,null],[4,2,3,19.0,73.0,"Run","Run",-2.0,0,0,55,null,null,null,null,null],[4,3,1,10.0,85.0,"Run","Run",3.0,0,0,null,null,null,null,null,null],[4,3,2,7.0,82.0,"Pass","Comp",6.0,0,0,6,null,null,null,null,null],[4,3,3,1.0,76.0,"Pass","Comp",13.0,0,0,44,null,null,null,null,null],[4,3,1,10.0,63.0,"Pass","Comp",6.0,0,0,17,null,null,null,null,null],[4,3,2,3.0,56.0,"Run","Run",5.0,0,0,null,null,null,null,null,null],[4,3,1,10.0,51.0,"Run","Run",0,0,0,11,null,null,null,null,null],[4,3,2,15.0,56.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,3,3,15.0,56.0,"Pass","Comp",6.0,0,0,34,null,null,null,null,null],[4,3,1,10.0,79.0,"Pass","Comp",8.0,0,0,11,null,null,null,null,null],[4,3,1,10.0,55.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,3,2,10.0,55.0,"Run","Run",-3.0,0,0,null,null,null,null,null,null],[4,3,3,13.0,58.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,1,10.0,79.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,2,10.0,79.0,"Pass","Comp",4.0,0,0,21,null,null,null,null,null],[4,4,3,6.0,75.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,1,10.0,90.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,2,10.0,90.0,"Run","Run",8.0,0,0,17,null,null,null,null,null],[4,4,3,2.0,82.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,4,2.0,82.0,"Run","Run",23.0,0,0,23,null,null,null,null,null],[4,4,1,10.0,65.0,"Pass","Comp",0,0,0,11,null,null,null,null,null],[4,4,2,10.0,65.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,1,10.0,50.0,"Pass","Comp",7.0,0,0,21,null,null,null,null,null],[4,4,2,3.0,43.0,"Sack","Sack",-17.0,0,0,25,null,null,null,null,null],[4,4,3,19.0,59.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,4,4.0,44.0,"Run","Run",5.0,0,0,23,null,null,null,null,null],[4,4,1,10.0,39.0,"Pass","Inc",0,0,0,21,null,null,null,null,null],[4,4,2,7.0,36.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[4,4,3,7.0,36.0,"Run","Run",15.0,0,0,null,null,null,null,null,null],[4,4,1,10.0,21.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,1,1,10.0,84.0,"Run","Run",-2.0,0,0,30,null,null,null,null,null],[5,1,2,12.0,86.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,1,3,12.0,86.0,"Run","Run",0,0,0,87,null,null,null,null,null],[5,2,1,10.0,73.0,"Run","Run",6.0,0,0,23,5,null,null,null,null],[5,2,2,14.0,77.0,"Pass","Comp",6.0,0,0,34,23,null,null,null,null],[5,2,3,8.0,71.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,2,1,10.0,66.0,"Run","Run",6.0,0,0,21,23,null,null,null,null],[5,2,2,4.0,60.0,"Run","Run",8.0,0,0,44,5,null,null,null,null],[5,2,1,10.0,52.0,"Run","Run",3.0,0,0,44,30,null,null,null,null],[5,2,2,7.0,49.0,"Run","Run",-1.0,0,0,21,30,null,null,null,null],[5,2,3,4.0,46.0,"Run","Run",2.0,0,0,null,null,null,null,null,null],[5,2,4,2.0,44.0,"Run","Run",1.0,0,0,72,null,null,null,null,null],[5,2,1,10.0,89.0,"Pass","Comp",10.0,0,0,34,23,null,null,null,null],[5,2,1,10.0,79.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,2,2,10.0,79.0,"Pass","Comp",4.0,0,0,5,23,null,null,null,null],[5,2,3,6.0,75.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,3,1,10.0,75.0,"Run","Run",3.0,0,0,30,null,null,null,null,null],[5,3,2,7.0,72.0,"Run","Run",9.0,0,0,21,5,null,null,null,null],[5,3,1,10.0,63.0,"Run","Run",2.0,0,0,34,30,null,null,null,null],[5,3,3,13.0,66.0,"Run","Run",20.0,0,0,34,null,null,null,null,null],[5,3,1,10.0,46.0,"Run","Run",7.0,0,0,11,null,null,null,null,null],[5,3,2,3.0,39.0,"Run","Run",7.0,0,0,44,5,null,null,null,null],[5,3,1,10.0,32.0,"Run","Run",1.0,0,0,87,null,null,null,null,null],[5,3,2,9.0,31.0,"Run","Run",1.0,0,0,72,26,null,null,null,null],[5,3,3,8.0,30.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,3,4,8.0,30.0,"Run","Run",0,0,1,26,null,null,null,25,30],[5,3,1,10.0,60.0,"Run","Run",0,0,0,21,25,null,null,null,null],[5,3,2,10.0,60.0,"Run","Run",3.0,0,0,25,74,null,null,null,null],[5,3,3,7.0,57.0,"Sack","Sack",-2.0,0,0,35,44,null,null,null,null],[5,4,1,10.0,76.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,4,2,10.0,76.0,"Run","Run",6.0,0,0,null,null,null,null,null,null],[5,4,1,10.0,65.0,"Run","Run",2.0,0,0,87,26,null,null,null,null],[5,4,2,8.0,63.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,4,3,8.0,63.0,"Pass","Inc",0,0,0,null,null,null,null,null,null],[5,4,1,10.0,44.0,"Run","Run",6.0,0,0,25,6,null,null,null,null],[5,4,2,4.0,39.0,"Run","Run",1.0,0,0,26,null,null,null,null,null],[5,4,3,3.0,38.0,"Run","Run",-7.0,0,0,17,null,null,null,null,null]],"games":[{"id":1,"opp":"Bonny Eagle","pf":14,"pa":21},{"id":2,"opp":"Thornton Academy","pf":21,"pa":35},{"id":3,"opp":"Scarborough","pf":20,"pa":13},{"id":4,"opp":"Cheverus","pf":27,"pa":20},{"id":5,"opp":"Sanford","pf":40,"pa":0}],"names":{"1":"Logan Salamone","2":"Crosby Michaud","3":"Gage Difazio","5":"Shea Healy","6":"Brady Dobson","7":"Aiden Beausang","8":"Caniyo Ervin","9":"Christian Beausang","10":"Ben Dube","11":"Ronin Westin","12":"Oliver Frank","13":"Claude Yoka","14":"Lamarr Smith","15":"Camden Matthews","16":"JJ Galyean","17":"Dominic Harrison","18":"Everett Meyers","19":"Silas Lupien","20":"Xander Kuchta","21":"Chase Lappin","23":"Jacoby Jellow","24":"Jensy Baez","25":"Tiadgh Babb","27":"Aiden Vreeland","28":"Will Lindencamp","30":"Eli Grant","33":"David Dicenso","34":"Christopher Salamone","35":"Israel Muzela","40":"Lachlan Beausang","44":"Emmett Swift","50":"Isaac Jensen","26":"Logan Hychko","52":"Henry Delacruz","53":"Beckett Haynes","55":"Nathan Kierstead","54":"Ethan Bolduc","56":"Darius Jackson","57":"Daniel Tshitenge","59":"Oscar Buck","60":"Joey Palandino","63":"Jones Jenisch","64":"Eden Gunn","65":"Grayson Luce","70":"Hunter Libby","72":"Gavin Williams","74":"Umar Weise","78":"Chance Weber","79":"Ryan McGibbon","87":"Owen Blais","88":"Example: their #88 \u2014 starting RB"},"grp":{"1":"DB","2":"DB","3":"DB","5":"DB","6":"DB","7":"DB","8":"LB","9":"DB","10":"DB","11":"DB","12":"DB","13":"DB","14":"LB","15":"DB","16":"LB","17":"DB","18":"DB","19":"DB","20":"DB","21":"LB","23":"LB","24":"LB","25":"LB","27":"LB","28":"DB","30":"LB","33":"Front","34":"DB","35":"Front","40":"LB","44":"Front","50":"Front","26":"Front","52":"Front","53":"Front","55":"Front","54":"LB","56":"Front","57":"Front","59":"Front","60":"Front","63":"Front","64":"Front","65":"Front","70":"Front","72":"Front","74":"Front","78":"Front","79":"Front","87":"Front","88":"Other"}};
+const NAME=n=>D.names[n]||('#'+n), GRP=n=>D.grp[n]||'Other', GL={Front:'Line',LB:'Linebacker',DB:'Secondary',Other:'Other'};
+const short=n=>{const s=NAME(n);const p=s.split(' ');return p.length>1?p[0][0]+'. '+p.slice(1).join(' '):s};
+const P=D.plays.map(a=>({g:a[0],qtr:a[1],down:a[2],dist:a[3],ytg:a[4],type:a[5],res:a[6],gain:a[7],td:a[8],to:a[9],t:a[10],a:a[11],intb:a[12],pbu:a[13],ff:a[14],fr:a[15]}));
+const FR={1:.5,2:.7};
+P.forEach(p=>{p.succ=p.to?0:(p.td?1:(p.gain>=(FR[p.down]||1)*p.dist?1:0));p.expl=(p.type==='Run'&&p.gain>=10)||(p.res==='Comp'&&p.gain>=15)?1:0;
+  p.stuff=p.type==='Run'&&p.gain<=0?1:0;p.tfl=p.type==='Run'&&p.gain<0&&p.t!=null?1:0;p.sack=p.type==='Sack'?1:0;
+  p.havoc=(p.tfl||p.sack||p.intb!=null||p.pbu!=null||p.ff!=null)?1:0;p.inv=[p.t,p.a].filter(x=>x!=null);
+  p.zone=p.ytg<=20?'Red zone':p.ytg<=50?'Our 21–50':p.ytg<=80?'Their 20–50':'Inside their 20'});
+const ABBR={'Bonny Eagle':'Bonny Eagle','Scarborough':'Scarborough','Thornton Academy':'Thornton','Sanford':'Sanford','Cheverus':'Cheverus'};
+let state={game:0,metric:'stop',grp:'all',tgrp:'all',minInv:4,split:'down',sort:null};
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct=x=>isFinite(x)?(x*100).toFixed(1)+'%':'–', f1=x=>isFinite(x)?x.toFixed(1):'–', sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const rate=(a,f)=>a.length?sum(a,f)/a.length:NaN;
+const wil=(s,n,z=1.2816)=>{if(!n)return[0,0];const q=s/n,den=1+z*z/n,c=(q+z*z/(2*n))/den,h=z*Math.sqrt(q*(1-q)/n+z*z/(4*n*n))/den;return[c-h,c+h]};
+const GC=g=>({Front:css('--riot'),LB:css('--gold'),DB:css('--ink'),Other:css('--opp')}[g]);
+
+const PA=sum(D.games,g=>g.pa);
+document.getElementById('record').innerHTML=`${(PA/D.games.length).toFixed(1)}<small>points allowed per game (${PA} total)</small>`;
+const strip=document.getElementById('strip');
+const mk=(id,opp,score,wl)=>{const b=document.createElement('button');b.dataset.g=id;b.setAttribute('aria-pressed',id===0);
+  b.innerHTML=`<span class="opp">${opp}</span><span class="score">${score}</span><span class="wl ${wl}">${wl==='W'?'Win':wl==='L'?'Loss':'&nbsp;'}</span>`;
+  b.onclick=()=>{state.game=id;[...strip.children].forEach(c=>c.setAttribute('aria-pressed',c===b));render()};strip.appendChild(b)};
+mk(0,'Full season',`${D.games.filter(g=>g.pf>g.pa).length}–${D.games.filter(g=>g.pf<g.pa).length}`,'');
+D.games.forEach(g=>mk(g.id,'vs '+ABBR[g.opp],`${g.pf}–${g.pa}`,g.pf>g.pa?'W':'L'));
+function seg(id,key,attr){const el=document.getElementById(id);el.querySelectorAll('button').forEach(b=>b.onclick=()=>{state[key]=b.dataset[attr];state.sort=null;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()})}
+seg('metricSeg','metric','m');seg('grpSeg','grp','g');seg('tgSeg','tgrp','g');seg('splitSeg','split','s');
+const mi=document.getElementById('minInv');mi.oninput=()=>{state.minInv=+mi.value;document.getElementById('minOut').textContent=mi.value;render()};
+
+function defenders(pl){const by={};pl.forEach(p=>{p.inv.forEach(n=>(by[n]=by[n]||{n,plays:[],h:0,tfl:0,sck:0,pbu:0,int:0,ff:0,fr:0,solo:0,ast:0}).plays.push(p));
+   if(p.t!=null&&p.a==null)by[p.t].solo++; if(p.t!=null&&p.a!=null){by[p.t].ast++;by[p.a].ast++}
+   const cr=(n,k)=>{if(n==null)return;(by[n]=by[n]||{n,plays:[],h:0,tfl:0,sck:0,pbu:0,int:0,ff:0,fr:0,solo:0,ast:0})[k]++};
+   if(p.tfl)cr(p.t,'tfl');if(p.sack)cr(p.t,'sck');cr(p.pbu,'pbu');cr(p.intb,'int');cr(p.ff,'ff');cr(p.fr,'fr')});
+  const rows=Object.values(by);rows.forEach(r=>{const a=r.plays;r.inv=a.length;r.stops=sum(a,p=>1-p.succ);r.stop=r.inv?r.stops/r.inv:NaN;r.depth=r.inv?sum(a,p=>p.gain)/r.inv:NaN;
+    r.h=r.tfl+r.sck+r.pbu+r.int+r.ff;r.havoc=r.inv?r.h/r.inv:(r.h?1:NaN);r.expl=sum(a,p=>p.expl);r.grp=GRP(r.n);r.gp=new Set(a.map(p=>p.g)).size;r.name=NAME(r.n);r.tot=r.solo+r.ast});
+  return rows}
+let charts={};function mkChart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg)}
+function placeLabels(pts,area,measure,H,extra){
+  H=H||14;const placed=(extra||[]).slice(),out=[];
+  const circ=pts.map(p=>({x1:p.x-p.r,y1:p.y-p.r,x2:p.x+p.r,y2:p.y+p.r}));
+  const ov=(a,b)=>Math.max(0,Math.min(a.x2,b.x2)-Math.max(a.x1,b.x1))*Math.max(0,Math.min(a.y2,b.y2)-Math.max(a.y1,b.y1));
+  const dirs=[[1,0],[-1,0],[0,-1],[0,1],[.75,-.75],[-.75,-.75],[.75,.75],[-.75,.75],[1,-.45],[-1,-.45],[1,.45],[-1,.45]];
+  const order=pts.map((p,i)=>i).sort((a,b)=>pts[b].r-pts[a].r);
+  for(const i of order){const p=pts[i];if(!p.label)continue;const w=measure(p.label)+4;let best=null,bestCost=Infinity;
+    for(const ring of [0,10,20,32,46,62,80,100,125,150]){
+      for(const [dx,dy] of dirs){const d=p.r+4+ring,cx=p.x+dx*d,cy=p.y+dy*d;
+        const x1=dx>0.3?cx:dx<-0.3?cx-w:cx-w/2, y1=dy>0.3?cy:dy<-0.3?cy-H:cy-H/2;
+        const b={x1,y1,x2:x1+w,y2:y1+H};
+        let cost=0;
+        if(b.x1<area.left||b.x2>area.right||b.y1<area.top||b.y2>area.bottom)cost+=1e6;
+        placed.forEach(q=>{const o=ov(b,q);if(o>0)cost+=1e5+o});circ.forEach((c,j)=>{if(j!==i)cost+=ov(b,c)*5});
+        cost+=ring*0.5;
+        if(cost<bestCost){bestCost=cost;best={b,ring,dx,dy}}
+      }
+      if(bestCost<ring*0.5+1)break;
+    }
+    placed.push(best.b);out[i]={...best,p};}
+  return out;
+}
+
+const labelPlugin={id:'lbl',afterDatasetsDraw(c){const ctx=c.ctx;ctx.save();ctx.font='600 12px Barlow, Arial';
+  const pts=[];c.data.datasets.forEach((ds,i)=>c.getDatasetMeta(i).data.forEach((pt,j)=>{const r=ds.data[j];pts.push({x:pt.x,y:pt.y,r:pt.options.radius||6,label:r.label})}));
+  const extra=[];const ro=c.options.plugins.ref;
+  if(ro&&ro.y!=null){ctx.font='12px Barlow, Arial';const w=ctx.measureText(ro.text).width,y=c.scales.y.getPixelForValue(ro.y);extra.push({x1:c.chartArea.right-6-w,y1:y-19,x2:c.chartArea.right,y2:y-1});ctx.font='600 12px Barlow, Arial'}
+  const res=placeLabels(pts,c.chartArea,s=>ctx.measureText(s).width,15,extra);
+  res.forEach(o=>{if(!o)return;const b=o.b,p=o.p,tx=Math.max(b.x1,Math.min(p.x,b.x2)),ty=Math.max(b.y1,Math.min(p.y,b.y2));
+    if(o.ring>0){const a=Math.atan2(ty-p.y,tx-p.x);ctx.strokeStyle=css('--muted');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*p.r,p.y+Math.sin(a)*p.r);ctx.lineTo(tx,ty);ctx.stroke()}
+    ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle=css('--surface');ctx.strokeText(p.label,b.x1+2,(b.y1+b.y2)/2);ctx.fillStyle=css('--ink');ctx.fillText(p.label,b.x1+2,(b.y1+b.y2)/2)});
+  ctx.restore()}};
+const refPlugin={id:'ref',beforeDatasetsDraw(c,_,o){if(o.y==null)return;const y=c.scales.y.getPixelForValue(o.y),ctx=c.ctx;ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle=css('--muted');ctx.beginPath();ctx.moveTo(c.chartArea.left,y);ctx.lineTo(c.chartArea.right,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=css('--muted');ctx.font='12px Barlow, Arial';ctx.textAlign='right';ctx.fillText(o.text,c.chartArea.right-4,y-6);ctx.restore()}};
+const ivPlugin={id:'iv',beforeDatasetsDraw(c){const ctx=c.ctx;ctx.save();ctx.lineWidth=3;ctx.lineCap='round';c.data.datasets[0].data.forEach(d=>{const y=c.scales.y.getPixelForValue(d.y);ctx.strokeStyle=d.col+'88';ctx.beginPath();ctx.moveTo(c.scales.x.getPixelForValue(d.lo),y);ctx.lineTo(c.scales.x.getPixelForValue(d.hi),y);ctx.stroke();
+  if(d.gr!=null){const x=c.scales.x.getPixelForValue(d.gr);ctx.strokeStyle=css('--muted');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x,y+7);ctx.stroke();ctx.lineWidth=3}});ctx.restore()}};
+const legendHTML='';
+
+let render=function(){
+  Chart.defaults.font.family='Barlow, Arial, sans-serif';Chart.defaults.color=css('--muted');Chart.defaults.borderColor=css('--rule');
+  const pl=P.filter(p=>!state.game||p.g===state.game), g=state.game?D.games.find(x=>x.id===state.game):null;
+  document.getElementById('scope').textContent=g?`Showing the ${g.opp} game (${g.pf}–${g.pa}), ${pl.length} opponent snaps.`:`Showing all five games, ${pl.length} opponent snaps.`;
+  const runs=pl.filter(p=>p.type==='Run'),pass=pl.filter(p=>p.type!=='Run'),late=pl.filter(p=>p.down>=3),rz=pl.filter(p=>p.ytg<=20);
+  const kp=[[pct(rate(pl,p=>p.succ)),'Opponent success rate',`runs ${pct(rate(runs,p=>p.succ))}, passes ${pct(rate(pass,p=>p.succ))}`],
+    [pct(rate(pl,p=>p.expl)),'Explosive plays allowed',`${sum(pl,p=>p.expl)} of ${pl.length} snaps`],
+    [f1(rate(pl,p=>p.gain)),'Yards per play allowed',`runs ${f1(rate(runs,p=>p.gain))}, passes ${f1(rate(pass,p=>p.gain))}`],
+    [pct(late.length?1-rate(late,p=>p.succ):NaN),'3rd/4th-down stop rate',`${sum(late,p=>1-p.succ)} of ${late.length}`]];
+  const kp2=[[pct(rate(runs,p=>p.stuff)),'Runs stuffed',`zero or negative yards`],[pct(rate(pl,p=>p.havoc)),'Havoc rate',`${sum(pl,p=>p.havoc)} snaps with a TFL, sack, INT, PBU or FF`],
+    [pct(rate(rz,p=>p.succ)),'Red-zone success allowed',`${sum(rz,p=>p.td)} TDs on ${rz.length} red-zone snaps`],[pct(rate(pass,p=>p.res==='Inc'||p.res==='INT'?1:0)),'Passes defended','incompletions + INTs per dropback']];
+  const kh=k=>k.map(x=>`<div class="kpi"><div class="v">${x[0]}</div><div class="l">${x[1]}</div><div class="s">${x[2]}</div></div>`).join('');
+  document.getElementById('kpis').innerHTML=kh(kp);document.getElementById('kpis2').innerHTML=kh(kp2);
+  const dim=i=>state.game&&D.games[i].id!==state.game;
+  mkChart('byGame',{type:'bar',data:{labels:D.games.map(x=>ABBR[x.opp]),datasets:[
+    {label:'Runs',data:D.games.map(gm=>rate(P.filter(p=>p.g===gm.id&&p.type==='Run'),p=>p.succ)),backgroundColor:D.games.map((_,i)=>css('--riot')+(dim(i)?'40':'FF'))},
+    {label:'Passes',data:D.games.map(gm=>rate(P.filter(p=>p.g===gm.id&&p.type!=='Run'),p=>p.succ)),backgroundColor:D.games.map((_,i)=>css('--opp')+(dim(i)?'40':'FF'))}]},
+    options:{maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${pct(c.raw)}`}}},scales:{y:{beginAtZero:true,max:1,ticks:{callback:v=>Math.round(v*100)+'%'}}}}});
+  const sp={down:[['1st',p=>p.down===1],['2nd',p=>p.down===2],['3rd',p=>p.down===3],['4th',p=>p.down===4]],
+    zone:[['Inside their 20',p=>p.zone==='Inside their 20'],['Their 20–50',p=>p.zone==='Their 20–50'],['Our 21–50',p=>p.zone==='Our 21–50'],['Red zone',p=>p.zone==='Red zone']],
+    qtr:[['Q1',p=>p.qtr===1],['Q2',p=>p.qtr===2],['Q3',p=>p.qtr===3],['Q4',p=>p.qtr===4]]}[state.split];
+  mkChart('split',{type:'bar',data:{labels:sp.map(s=>s[0]),datasets:[
+    {label:'Runs',data:sp.map(s=>rate(runs.filter(s[1]),p=>p.succ)),backgroundColor:css('--riot')},{label:'Passes',data:sp.map(s=>rate(pass.filter(s[1]),p=>p.succ)),backgroundColor:css('--opp')}]},
+    options:{maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{const s=sp[c.dataIndex],a=(c.datasetIndex?pass:runs).filter(s[1]);return `${c.dataset.label}: ${pct(c.raw)} (${a.length} snaps)`}}}},scales:{y:{beginAtZero:true,max:1,ticks:{callback:v=>Math.round(v*100)+'%'}}}}});
+  // scatter
+  const rows=defenders(pl), m=state.metric, mLab={stop:'Stop rate',depth:'Tackle depth (yds, lower is better)',havoc:'Havoc per involvement'}[m];
+  const vis=rows.filter(r=>r.inv>=state.minInv&&(state.grp==='all'||r.grp===state.grp));
+  const pool=pl.filter(p=>p.inv.length&&(state.grp==='all'||p.inv.some(n=>GRP(n)===state.grp)));
+  const ref={stop:1-rate(pl.filter(p=>p.inv.length),p=>p.succ),depth:rate(pl.filter(p=>p.inv.length),p=>p.gain),havoc:sum(rows,r=>r.h)/sum(rows,r=>r.inv)}[m];
+  mkChart('scatter',{type:'scatter',data:{datasets:[{data:vis.map(r=>({x:r.inv,y:r[m],label:short(r.n),r})),pointRadius:7,pointHoverRadius:9,backgroundColor:vis.map(r=>GC(r.grp)+'CC'),borderColor:vis.map(r=>GC(r.grp))}]},
+    options:{maintainAspectRatio:false,animation:false,layout:{padding:{right:12,top:8}},plugins:{legend:{display:false},ref:{y:ref,text:'Defense '+(m==='depth'?f1(ref):pct(ref))},
+      tooltip:{callbacks:{label:c=>{const r=c.raw.r;return[`${r.name} (#${r.n}), ${GL[r.grp]}`,`${r.inv} tackles involved, ${r.stops} stops (${pct(r.stop)})`,`Tackle depth ${f1(r.depth)} yds, havoc ${r.h}`]}}}},
+      scales:{x:{beginAtZero:true,title:{display:true,text:'Tackles involved (scrimmage)'}},y:{reverse:m==='depth',beginAtZero:true,max:m==='depth'?undefined:1,title:{display:true,text:mLab},ticks:{callback:v=>m==='depth'?v:Math.round(v*100)+'%'}}}},plugins:[labelPlugin,refPlugin]});
+  // observations for current filter
+  const obs=[];const grpAvg=gr=>{const a=pl.filter(p=>p.inv.some(n=>GRP(n)===gr));return 1-rate(a,p=>p.succ)};
+  const q=rows.filter(r=>r.inv>=state.minInv);
+  const best=[...q].sort((a,b)=>b.stops-a.stops)[0];
+  if(best)obs.push(['eff',`${best.name}: ${best.stops} stops on ${best.inv} tackles`,`${pct(best.stop)} stop rate at ${f1(best.depth)} yards per tackle, against ${pct(grpAvg(best.grp))} for ${GL[best.grp].toLowerCase()==='line'?'the line':GL[best.grp].toLowerCase()+'s'} as a group.`]);
+  ['Front','LB','DB'].forEach(gr=>{const a=q.filter(r=>r.grp===gr&&r.n!==(best&&best.n)).sort((x,y)=>(y.stop-x.stop)||(y.inv-x.inv))[0];if(a)obs.push([a.stop>=grpAvg(gr)?'eff':'info',`Top ${GL[gr].toLowerCase()} stop rate: ${a.name}`,`${a.stops} of ${a.inv} (${pct(a.stop)}) vs. ${pct(grpAvg(gr))} for the group; ${f1(a.depth)} yards per tackle.`])});
+  const lastLine=[...q].filter(r=>r.grp==='DB').sort((a,b)=>b.expl-a.expl)[0];
+  if(lastLine&&lastLine.expl>=2)obs.push(['heavy',`${lastLine.name} is the last line`,`Involved in ${lastLine.expl} tackles on explosive plays, so his stop rate reflects where he lines up as much as how he plays.`]);
+  document.getElementById('obs').innerHTML=obs.length?obs.map(o=>`<li class="${o[0]}"><b>${o[1]}</b><span>${o[2]}</span></li>`).join(''):'<li>Not enough tackles in this view. Lower the minimum or pick the full season.</li>';
+  table(rows);
+  renderDeep();
+};
+function table(rows){
+  rows=rows.filter(r=>state.tgrp==='all'||r.grp===state.tgrp);
+  const cols=[['#','n'],['Player','name'],['Group','grpL'],['GP','gp'],['Involved','inv'],['Solo','solo'],['Ast','ast'],['Stops','stops'],['Stop rate','stop','p','hi'],['Tackle depth','depth','1','lo'],['Explosive tackles','expl'],['TFL','tfl'],['Sacks','sck'],['PBU','pbu'],['INT','int'],['FF','ff'],['FR','fr'],['Havoc','h','','hi']];
+  rows.forEach(r=>r.grpL=GL[r.grp]);
+  const sk=state.sort||{k:'inv',d:-1};
+  rows.sort((a,b)=>{const x=a[sk.k],y=b[sk.k];if(typeof x==='string')return sk.d*(x<y?-1:1)*-1;return sk.d*((isFinite(x)?x:-1e9)-(isFinite(y)?y:-1e9))});
+  const th=document.querySelector('#tbl thead'),tb=document.querySelector('#tbl tbody');
+  th.innerHTML='<tr>'+cols.map(c=>`<th tabindex="0" data-k="${c[1]}" ${sk.k===c[1]?`aria-sort="${sk.d<0?'descending':'ascending'}"`:''}>${c[0]}</th>`).join('')+'</tr>';
+  th.querySelectorAll('th').forEach(h=>{const go=()=>{const k=h.dataset.k;state.sort={k,d:state.sort&&state.sort.k===k?-state.sort.d:-1};table(defenders(P.filter(p=>!state.game||p.g===state.game)))};h.onclick=go;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
+  const big=rows.filter(r=>r.inv>=state.minInv);
+  tb.innerHTML=rows.map(r=>'<tr>'+cols.map(c=>{const v=r[c[1]];let cls='';
+    if(c[3]==='hi'&&r.inv>=state.minInv&&isFinite(v)&&big.length>2&&v===Math.max(...big.map(x=>x[c[1]]).filter(isFinite)))cls='num-hi';
+    if(c[3]==='lo'&&r.inv>=state.minInv&&isFinite(v)&&big.length>2&&v===Math.min(...big.map(x=>x[c[1]]).filter(isFinite)))cls='num-hi';
+    return `<td class="${cls}">${c[2]==='p'?pct(v):c[2]==='1'?f1(v):(v==null?'–':v)}</td>`}).join('')+'</tr>').join('');
+}
+// ---- deep dive (season) ----
+function renderDeep(){
+  const rows=defenders(P).filter(r=>r.inv>=3);
+  const gAvg={};['Front','LB','DB'].forEach(gr=>{const a=rows.filter(r=>r.grp===gr);gAvg[gr]=sum(a,r=>r.stops)/sum(a,r=>r.inv)});
+  rows.forEach(r=>{const ga=gAvg[r.grp]??0.5;r.ga=ga;r.adj=(r.stops+10*ga)/(r.inv+10);[r.lo,r.hi]=wil(r.stops,r.inv);r.diff=r.adj-ga});
+  const R=[...rows].sort((a,b)=>b.diff-a.diff);
+  mkChart('ci',{type:'scatter',data:{datasets:[{data:R.map((r,i)=>({x:r.adj,y:i,lo:r.lo,hi:r.hi,gr:r.ga,col:GC(r.grp),r})),pointRadius:7,pointHoverRadius:9,backgroundColor:R.map(r=>GC(r.grp)),borderColor:R.map(r=>GC(r.grp))}]},
+    options:{maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const r=c.raw.r;return[`${r.name}, ${GL[r.grp]}`,`${r.stops} of ${r.inv} stops (${pct(r.stop)})`,`Adjusted ${pct(r.adj)} vs. group ${pct(r.ga)}`,`80% range ${pct(r.lo)}–${pct(r.hi)}`]}}}},
+      scales:{x:{min:0,max:1,ticks:{callback:v=>Math.round(v*100)+'%'}},y:{reverse:true,min:-.5,max:R.length-.5,ticks:{stepSize:1,autoSkip:false,callback:v=>Number.isInteger(v)&&R[v]?short(R[v].n)+` (${R[v].inv})`:''},grid:{display:false}}}},plugins:[ivPlugin]});
+  const f=n=>rows.find(r=>r.n===n)||defenders(P).find(r=>r.n===n);
+  const gw=f(72),lh=f(26),ob=f(87),eg=f(30),nk=f(55),tb=f(25),jj=f(23),sh=f(5),cs=f(34);
+  const items=[];
+  if(gw)items.push(['eff',`${gw.name}: the defense's most reliable finisher`,`${gw.stops} stops on ${gw.inv} tackles (${pct(gw.stop)}) at ${f1(gw.depth)} yards per tackle, against a line average of ${pct(gAvg.Front)}. Even the low end of his range (${pct(gw.lo)}) is above the group. He's in on tackles every game, so the takeaway is less about adding snaps and more that the run defense leans on him.`]);
+  if(lh)items.push(['eff',`${lh.name}: perfect on a small sample`,`All ${lh.inv} of his tackles were stops, at ${f1(lh.depth)} yards per tackle, plus a sack. He's charted on defense in only ${lh.gp} of 5 games. Adjusted for the sample he still rates ${pct(lh.adj)} vs. ${pct(gAvg.Front)} for the line — the strongest "could play more" signal on defense.`]);
+  if(ob)items.push(['eff',`${ob.name}: similar pattern`,`${ob.stops} stops on ${ob.inv} tackles (${pct(ob.stop)}), ${f1(ob.depth)} yards per tackle, in ${ob.gp} games.`]);
+  if(eg)items.push(['eff',`${eg.name}: best linebacker rate`,`${eg.stops} of ${eg.inv} (${pct(eg.stop)}) vs. ${pct(gAvg.LB)} for linebackers, with ${eg.tfl} TFL. Only charted in ${eg.gp} games on defense.`]);
+  if(nk&&tb)items.push(['info',`Havoc on limited involvement: ${nk.name} and ${tb.name}`,`${nk.name} has ${nk.tfl} TFL on ${nk.inv} tackles in ${nk.gp} games; ${tb.name} has ${tb.h} scrimmage havoc play${tb.h===1?'':'s'} (${[tb.sck&&'sack',tb.ff&&'forced fumble'].filter(Boolean).join(' and ')}) on ${tb.inv} tackles (plus a forced fumble on kick coverage). The defense averages one havoc play every ${f1(sum(defenders(P),r=>r.inv)/sum(defenders(P),r=>r.h))} involvements.`]);
+  if(jj&&sh)items.push(['heavy',`The heavy-volume tacklers`,`${jj.name} (${jj.inv} involvements, ${pct(jj.stop)} stops) and ${sh.name} (${sh.inv}, ${pct(sh.stop)}) carry the most tackles. ${sh.name}'s lower rate comes with ${sh.expl} tackles on explosive plays — he's often the last man, which is a role effect. Both also play major offensive snaps${cs?`, as does ${cs.name}`:''}.`]);
+  document.getElementById('deepObs').innerHTML=items.map(o=>`<li class="${o[0]}"><b>${o[1]}</b><span>${o[2]}</span></li>`).join('');
+  const sel=document.getElementById('spotSel');
+  if(!sel.options.length){defenders(P).sort((a,b)=>b.inv-a.inv).forEach(r=>{const o=document.createElement('option');o.value=r.n;o.textContent=`${r.name} (#${r.n})`;if(r.n===26)o.selected=true;sel.appendChild(o)});sel.onchange=spot}
+  spot(gAvg);
+}
+function spot(gAvg){
+  const all=defenders(P);if(!gAvg||!gAvg.Front){gAvg={};['Front','LB','DB'].forEach(gr=>{const a=all.filter(r=>r.grp===gr);gAvg[gr]=sum(a,r=>r.stops)/sum(a,r=>r.inv)})}
+  const n=+document.getElementById('spotSel').value,r=all.find(x=>x.n===n),ga=gAvg[r.grp]??.5,adj=(r.stops+10*ga)/(r.inv+10);
+  document.getElementById('spotKpis').innerHTML=[[pct(r.stop),'Stop rate',`${r.stops} of ${r.inv}; ${GL[r.grp].toLowerCase()} avg ${pct(ga)}`],[pct(adj),'Adjusted stop rate',`range ${wil(r.stops,r.inv).map(pct).join('–')}`],
+    [f1(r.depth),'Tackle depth (yds)',`defense avg ${f1(sum(all,x=>sum(x.plays,p=>p.gain))/sum(all,x=>x.inv))}`],[String(r.h),'Havoc plays',`${r.tfl} TFL, ${r.sck} sacks, ${r.pbu} PBU, ${r.int} INT, ${r.ff} FF`]]
+    .map(k=>`<div class="kpi"><div class="v">${k[0]}</div><div class="l">${k[1]}</div><div class="s">${k[2]}</div></div>`).join('');
+  const T=document.getElementById('spotTbl'),dn=['','1st','2nd','3rd','4th'];
+  T.querySelector('thead').innerHTML='<tr><th>Game</th><th>Situation</th><th>Play</th><th>Gain</th><th>Role</th><th>Stop</th></tr>';
+  T.querySelector('tbody').innerHTML=r.plays.map(p=>`<tr><td>${ABBR[D.games.find(x=>x.id===p.g).opp]}</td><td>${dn[p.down]} &amp; ${p.dist<1?'inches':p.dist}</td><td>${p.type}</td><td>${p.res==='Inc'?'Inc':p.gain+' yds'}${p.td?', TD':''}</td><td>${p.t===n?(p.a!=null?'Shared':'Solo'):'Assist'}</td><td>${p.succ?'No':'Yes'}</td></tr>`).join('');
+  const st=D.games.map(x=>r.plays.filter(p=>p.g===x.id&&!p.succ).length),ns=D.games.map(x=>r.plays.filter(p=>p.g===x.id&&p.succ).length);
+  mkChart('spotBar',{type:'bar',data:{labels:D.games.map(x=>ABBR[x.opp]),datasets:[{label:'Stops',data:st,backgroundColor:css('--turf')},{label:'After a successful play',data:ns,backgroundColor:css('--opp')+'99'}]},
+    options:{maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}});
+}
+render();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render());
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
+</body></html>
